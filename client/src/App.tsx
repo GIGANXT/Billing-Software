@@ -51,6 +51,12 @@ function AuthenticatedApp({ user }: { user: User }) {
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
+  
+  return (
+    <LanguageProvider>
+      {user ? <AuthenticatedApp user={user} /> : <LoginPage onLogin={setUser} />}
+    </LanguageProvider>
+  );
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useLocation();
 

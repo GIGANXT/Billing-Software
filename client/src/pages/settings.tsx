@@ -595,13 +595,15 @@ export default function Settings() {
                 
                 <div className="space-y-2">
                   <Label>Language</Label>
-                  <Select defaultValue="en">
+                  <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="hi">Hindi</SelectItem>
+                      <SelectItem value="hi">हिंदी</SelectItem>
+                      <SelectItem value="ta">தமிழ்</SelectItem>
+                      <SelectItem value="te">తెలుగు</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
