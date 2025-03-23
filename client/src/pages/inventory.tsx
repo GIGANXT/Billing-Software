@@ -34,6 +34,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { InventoryTable } from "@/components/inventory/inventory-table";
+import { AddMedicineForm } from "@/components/inventory/add-medicine-form";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Schema for adding a new category
 const categorySchema = z.object({
@@ -45,6 +47,7 @@ type CategoryFormValues = z.infer<typeof categorySchema>;
 export default function Inventory() {
   const [isAddCategoryDialogOpen, setIsAddCategoryDialogOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient1 = useQueryClient();
 
   // Category form
   const categoryForm = useForm<CategoryFormValues>({
@@ -82,16 +85,16 @@ export default function Inventory() {
   const onSubmitCategory = async (data: CategoryFormValues) => {
     try {
       await apiRequest("POST", "/api/categories", data);
-      
+
       toast({
         title: "Category added",
         description: "Category has been added successfully",
       });
-      
+
       // Refetch categories
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       refetchCategories();
-      
+
       // Close dialog and reset form
       setIsAddCategoryDialogOpen(false);
       categoryForm.reset();
@@ -129,7 +132,7 @@ export default function Inventory() {
       "Low Stock Threshold", 
       "GST Rate"
     ];
-    
+
     const csvContent = [
       headers.join(","),
       ...medicines.map((med: any) => [
@@ -174,13 +177,10 @@ export default function Inventory() {
               <DialogHeader>
                 <DialogTitle>Add New Medicine</DialogTitle>
               </DialogHeader>
-              {/* Medicine form is implemented in InventoryTable component */}
-              <p className="text-center text-muted-foreground">
-                The medicine form will be shown here.
-              </p>
+              <AddMedicineForm  queryClient={queryClient1} onAdd={() => refetchMedicines()}/>
             </DialogContent>
           </Dialog>
-          
+
           <Dialog open={isAddCategoryDialogOpen} onOpenChange={setIsAddCategoryDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -212,13 +212,13 @@ export default function Inventory() {
               </Form>
             </DialogContent>
           </Dialog>
-          
+
           <Button variant="outline" onClick={exportInventory}>
             <Download className="h-4 w-4 mr-2" /> Export
           </Button>
         </div>
       </div>
-      
+
       <Card>
         <CardContent className="p-0">
           <InventoryTable 
