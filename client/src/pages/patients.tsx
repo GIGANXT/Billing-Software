@@ -285,9 +285,31 @@ export default function Patients() {
       header: "Actions",
       cell: (row: any) => (
         <div className="flex space-x-2">
-          <Button variant="ghost" size="sm">
-            <FileText className="h-4 w-4 mr-1" /> View
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <FileText className="h-4 w-4 mr-1" /> View
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Prescription Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="aspect-[16/9] relative rounded-lg overflow-hidden">
+                  <img 
+                    src={row.imagePath} 
+                    alt="Prescription"
+                    className="object-contain w-full h-full"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <h4 className="font-medium">Notes</h4>
+                  <p className="text-sm text-muted-foreground">{row.notes || "No notes provided"}</p>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button variant="ghost" size="sm">
             <Upload className="h-4 w-4 mr-1" /> Share
           </Button>
