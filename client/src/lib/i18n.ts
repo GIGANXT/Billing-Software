@@ -54,3 +54,27 @@ export const t = (key: string) => {
   
   return value || key;
 };
+import i18next from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+export const translations = {
+  en: {
+    translation: {
+      // Add your translations here
+      welcome: 'Welcome'
+    }
+  }
+};
+
+i18next
+  .use(initReactI18next)
+  .init({
+    resources: translations,
+    lng: 'en',
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18next;
