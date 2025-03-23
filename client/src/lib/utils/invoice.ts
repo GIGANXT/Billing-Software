@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import type { CartItem, Customer } from "@/components/pos/cart";
 
 interface Medicine {
@@ -71,7 +71,7 @@ export function generateInvoicePDF(invoiceData: InvoiceData): void {
       `₹${item.totalPrice.toFixed(2)}`
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 85,
       head: [["Item", "Qty", "Unit Price", "GST", "GST Amt", "Total"]],
       body: tableData,
@@ -80,7 +80,7 @@ export function generateInvoicePDF(invoiceData: InvoiceData): void {
       margin: { left: 14, right: 14 },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY;
+    const finalY = doc.lastAutoTable.finalY;
 
     // Add totals
     doc.setFontSize(10);
