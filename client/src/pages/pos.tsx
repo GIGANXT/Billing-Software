@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { MedicineCard, MedicineItem } from "@/components/pos/medicine-card";
 import { Cart, CartItem } from "@/components/pos/cart";
-import { Search, Filter, BarcodeScannerIcon } from "lucide-react";
+import { Search, Filter, ScanBarcode } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -232,7 +232,7 @@ export default function POS() {
             />
             <div className="absolute inset-y-0 right-0 flex items-center">
               <Button variant="ghost" size="icon" className="h-full text-muted-foreground hover:text-foreground">
-                <BarcodeScannerIcon className="h-4 w-4" />
+                <ScanBarcode className="h-4 w-4" />
               </Button>
             </div>
           </div>
