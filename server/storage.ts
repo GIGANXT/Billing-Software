@@ -232,6 +232,22 @@ export class DatabaseStorage implements IStorage {
     return prescription;
   }
   
+  // Stock adjustment methods
+  async getStockAdjustments(): Promise<any[]> {
+    const adjustments = await db
+      .select({
+        medicine_name: medicines.name,
+        old_stock: sql<number>`old_stock`,
+        new_stock: medicines.stock,
+        reason: sql<string>`reason`,
+        created_at: sql<Date>`created_at`
+      })
+      .from(medicines)
+      .where(sql`old_stock IS NOT NULL`);
+    
+    return adjustments;
+  }
+
   // Analytics methods
   async getTopSellingMedicines(limit: number): Promise<any[]> {
     const result = await db
