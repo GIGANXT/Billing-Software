@@ -47,58 +47,50 @@ export function generateInvoicePDF(invoiceData: InvoiceData): void {
     // Import jsPDF and jspdf-autotable directly
     const { jsPDF } = require('jspdf');
     require('jspdf-autotable');
-    
+
     const doc = new jsPDF();
-    
+
     // Add company information at the top
     doc.setFontSize(20);
     doc.setTextColor(59, 130, 246); // Primary blue color
     doc.text("MediTrack", 14, 20);
-    
+
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     doc.text("Medical Billing System", 14, 25);
-    
+
     doc.setFontSize(10);
     doc.text("123 Main Street, Delhi, India", 14, 30);
     doc.text("Phone: +91 98765 43210", 14, 35);
     doc.text("Email: info@meditrack.com", 14, 40);
     doc.text("GST Number: 22AAAAA0000A1Z5", 14, 45);
-    
+
     // Add invoice title and number
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
     doc.text("TAX INVOICE", 150, 20, { align: "right" });
-    
+
     doc.setFontSize(10);
     doc.text(`Invoice Number: ${invoiceData.invoiceNumber}`, 150, 30, { align: "right" });
     doc.text(`Date: ${format(invoiceData.date, "dd/MM/yyyy")}`, 150, 35, { align: "right" });
     doc.text(`Time: ${format(invoiceData.date, "hh:mm a")}`, 150, 40, { align: "right" });
-    
+
     // Add customer information
     doc.setFontSize(12);
     doc.text("Bill To:", 14, 60);
-    
+
     doc.setFontSize(10);
     if (invoiceData.customer) {
       doc.text(`Name: ${invoiceData.customer.name}`, 14, 65);
       doc.text(`Phone: ${invoiceData.customer.phone}`, 14, 70);
-      if (invoiceData.customer.address) {
-        doc.text(`Address: ${invoiceData.customer.address}`, 14, 75);
-      }
-    } else {
-      doc.text("Walk-in Customer", 14, 65);
     }
-    
-    // Add doctor information if available
+
     if (invoiceData.doctorName) {
-      doc.text(`Prescribed by: Dr. ${invoiceData.doctorName}`, 150, 65, { align: "right" });
+      doc.text(`Doctor: ${invoiceData.doctorName}`, 14, 75);
     }
-    
+
     // Add items table
-    const tableColumn = ["#", "Item", "Qty", "Rate", "GST%", "GST Amt", "Total"];
-    const tableRows = invoiceData.items.map((item, index) => [
-      (index + 1).toString(),
+    const tableData = invoiceData.items.map(item => [
       item.medicine.name,
       item.quantity.toString(),
       `₹${item.unitPrice.toFixed(2)}`,
@@ -106,61 +98,57 @@ export function generateInvoicePDF(invoiceData: InvoiceData): void {
       `₹${item.gstAmount.toFixed(2)}`,
       `₹${item.totalPrice.toFixed(2)}`
     ]);
-    
-    // Call autoTable method from the document object
-    (doc as any).autoTable({
-      head: [tableColumn],
-      body: tableRows,
+
+    doc.autoTable({
       startY: 85,
-      theme: "grid",
-      styles: {
-        fontSize: 8,
-        cellPadding: 2,
-      },
-      headStyles: {
-        fillColor: [59, 130, 246],
-        textColor: [255, 255, 255],
-        fontStyle: "bold",
-      },
+      head: [['Item', 'Qty', 'Price', 'GST', 'GST Amt', 'Total']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246] },
+      styles: { fontSize: 8 },
       columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 70 },
-      },
+        0: { cellWidth: 60 },
+        1: { cellWidth: 20, halign: 'right' },
+        2: { cellWidth: 25, halign: 'right' },
+        3: { cellWidth: 20, halign: 'right' },
+        4: { cellWidth: 25, halign: 'right' },
+        5: { cellWidth: 25, halign: 'right' }
+      }
     });
-    
-    // Add total calculations
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    
+
+    const finalY = (doc as any).lastAutoTable.finalY || 150;
+
+    // Add totals
     doc.setFontSize(10);
-    doc.text("Subtotal:", 130, finalY);
-    doc.text(`₹${invoiceData.subtotal.toFixed(2)}`, 175, finalY, { align: "right" });
-    
-    doc.text("GST Amount:", 130, finalY + 5);
-    doc.text(`₹${invoiceData.gstAmount.toFixed(2)}`, 175, finalY + 5, { align: "right" });
-    
+    doc.text("Subtotal:", 130, finalY + 10);
+    doc.text(`₹${invoiceData.subtotal.toFixed(2)}`, 175, finalY + 10, { align: "right" });
+
+    doc.text("GST Amount:", 130, finalY + 20);
+    doc.text(`₹${invoiceData.gstAmount.toFixed(2)}`, 175, finalY + 20, { align: "right" });
+
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("Grand Total:", 130, finalY + 15);
-    doc.text(`₹${invoiceData.total.toFixed(2)}`, 175, finalY + 15, { align: "right" });
+    doc.text("Grand Total:", 130, finalY + 30);
+    doc.text(`₹${invoiceData.total.toFixed(2)}`, 175, finalY + 30, { align: "right" });
     doc.setFont("helvetica", "normal");
-    
+
     // Add terms and conditions
     doc.setFontSize(9);
-    doc.text("Terms & Conditions:", 14, finalY + 25);
+    doc.text("Terms & Conditions:", 14, finalY + 40);
     doc.setFontSize(8);
-    doc.text("1. Medicines once sold will not be taken back or exchanged.", 14, finalY + 30);
-    doc.text("2. This is a computer-generated invoice and does not require a signature.", 14, finalY + 35);
-    
+    doc.text("1. Medicines once sold will not be taken back or exchanged.", 14, finalY + 45);
+    doc.text("2. This is a computer-generated invoice and does not require a signature.", 14, finalY + 50);
+
     // Add footer
     doc.setFontSize(8);
     doc.setTextColor(100, 100, 100);
-    doc.text("Thank you for your business!", 105, finalY + 45, { align: "center" });
-    doc.text(`Served by: ${invoiceData.userInfo.name}`, 105, finalY + 50, { align: "center" });
-    
+    doc.text("Thank you for your business!", 105, finalY + 60, { align: "center" });
+    doc.text(`Served by: ${invoiceData.userInfo.name}`, 105, finalY + 65, { align: "center" });
+
     // Save the PDF
     doc.save(`Invoice-${invoiceData.invoiceNumber}.pdf`);
   } catch (error) {
     console.error("Error generating PDF:", error);
-    alert("There was an error generating the invoice PDF. Please try again.");
+    throw new Error("Failed to generate invoice PDF");
   }
 }
