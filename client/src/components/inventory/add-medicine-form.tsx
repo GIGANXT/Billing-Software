@@ -67,6 +67,9 @@ export function AddMedicineForm({ categories, onSuccess }: AddMedicineFormProps)
         category_id: parseInt(data.category_id),
         stock: parseInt(data.stock),
         lowStockThreshold: parseInt(data.lowStockThreshold),
+        gstRate: parseFloat(data.gstRate),
+        mrp: parseFloat(data.mrp),
+        expiryDate: new Date(data.expiryDate).toISOString(),
       };
 
       await apiRequest("POST", "/api/medicines", payload);
