@@ -15,6 +15,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { useEffect, useState } from "react";
 import { User, getCurrentUser } from "./lib/auth";
+import { LanguageProvider } from "@/contexts/language-context";
 
 function AuthenticatedApp({ user }: { user: User }) {
   const [location] = useLocation();
@@ -52,13 +53,34 @@ function AuthenticatedApp({ user }: { user: User }) {
 function App() {
   const [user, setUser] = useState<User | null>(null);
   
-  return (
-    <LanguageProvider>
-      {user ? <AuthenticatedApp user={user} /> : <LoginPage onLogin={setUser} />}
-    </LanguageProvider>
-  );
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useLocation();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="meditrack-theme">
+        <LanguageProvider>
+          {loading ? (
+            <div className="flex h-screen items-center justify-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : user ? (
+            <AuthenticatedApp user={user} />
+          ) : (
+            <Switch>
+              <Route path="/login">
+                <Login onLoginSuccess={setUser} />
+              </Route>
+              <Route>
+                <Login onLoginSuccess={setUser} />
+              </Route>
+            </Switch>
+          )}
+          <Toaster />
+        </LanguageProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
 
   useEffect(() => {
     const checkAuth = async () => {
