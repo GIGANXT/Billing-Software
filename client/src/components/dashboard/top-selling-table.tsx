@@ -71,7 +71,7 @@ export function TopSellingTable({ medicines }: TopSellingTableProps) {
                   <TableCell className="font-medium">{medicine.name}</TableCell>
                   <TableCell>{medicine.category}</TableCell>
                   <TableCell>{medicine.soldUnits}</TableCell>
-                  <TableCell>₹{medicine.revenue.toFixed(2)}</TableCell>
+                  <TableCell>₹{typeof medicine.revenue === 'number' ? medicine.revenue.toFixed(2) : medicine.revenue}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
