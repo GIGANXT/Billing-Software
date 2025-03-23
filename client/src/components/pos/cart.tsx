@@ -228,7 +228,7 @@ export function Cart({
                           <SelectValue placeholder="Select Doctor" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {doctors?.map((doctor: any) => (
                             <SelectItem key={doctor.id} value={doctor.id.toString()}>
                               Dr. {doctor.name}
