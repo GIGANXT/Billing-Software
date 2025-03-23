@@ -3,6 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import express from "express";
+import session from "express-session";
+import MemoryStore from "memorystore";
+import path from "path";
 import {
   insertUserSchema,
   insertCategorySchema,
@@ -13,12 +17,13 @@ import {
   insertInvoiceItemSchema,
   insertPrescriptionSchema
 } from "@shared/schema";
-import express from "express";
-import session from "express-session";
-import MemoryStore from "memorystore";
 import { prescriptionUpload, getAbsoluteFilePath } from "./services/upload";
 import { processPrescriptionImage } from "./services/prescription";
-import path from "path";
+
+// Helper function to format Zod validation errors
+function formatError(error: ZodError) {
+  return fromZodError(error);
+}
 
 const SessionStore = MemoryStore(session);
 
@@ -422,11 +427,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(201).json(prescription);
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({ message: formatError(error).message });
+        return res.status(400).json({ message: fromZodError(error).message });
       }
       return res.status(500).json({ message: "Server error" });
     }
   });
+  
+  // Prescription image upload and processing route
+  app.post(
+    "/api/prescriptions/upload",
+    isAuthenticated,
+    prescriptionUpload.single("prescription"),
+    async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ message: "No file uploaded" });
+        }
+        
+        const imagePath = getAbsoluteFilePath(req.file.filename, "prescription");
+        
+        // Process the uploaded prescription image
+        const extractionResult = await processPrescriptionImage(imagePath);
+        
+        return res.status(200).json({
+          filename: req.file.filename,
+          originalName: req.file.originalname,
+          path: `/uploads/prescriptions/${req.file.filename}`,
+          ...extractionResult
+        });
+      } catch (error) {
+        console.error('Error processing prescription upload:', error);
+        return res.status(500).json({ message: "Failed to process prescription image" });
+      }
+    }
+  );
+  
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Analytics routes
   app.get("/api/analytics/top-selling", isAuthenticated, async (req, res) => {

@@ -1,7 +1,7 @@
 import { createWorker } from 'tesseract.js';
-import Jimp from 'jimp';
 import fs from 'fs';
 import path from 'path';
+import * as Jimp from 'jimp';
 
 /**
  * Processes a prescription image to improve readability
@@ -11,6 +11,7 @@ import path from 'path';
  */
 export async function preprocessImage(imagePath: string): Promise<string> {
   try {
+    // Using ES module import with namespace
     const image = await Jimp.read(imagePath);
     const processedPath = imagePath.replace(/\.\w+$/, '_processed$&');
     
@@ -38,12 +39,10 @@ export async function extractTextFromPrescription(imagePath: string): Promise<st
   const processedImagePath = await preprocessImage(imagePath);
   
   try {
-    // Initialize Tesseract worker
-    const worker = await createWorker();
+    // Initialize Tesseract worker with language
+    const worker = await createWorker('eng');
     
-    // Load language data and set parameters
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
+    // Set parameters
     await worker.setParameters({
       tessedit_char_whitelist: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,()-/ ',
       preserve_interword_spaces: '1',
