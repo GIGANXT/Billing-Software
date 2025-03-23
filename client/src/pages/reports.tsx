@@ -201,7 +201,7 @@ export default function Reports() {
     {
       key: "revenue",
       header: "Revenue",
-      cell: (row: any) => <div className="font-medium">₹{row.revenue.toFixed(2)}</div>,
+      cell: (row: any) => <div className="font-medium">₹{Number(row.revenue).toFixed(2)}</div>,
     },
   ];
 
