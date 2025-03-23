@@ -54,7 +54,7 @@ const prescriptionSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   doctorId: z.string().optional(),
   notes: z.string().optional(),
-  // In a real app, we would handle file upload
+  imagePath: z.string().optional(), // Added imagePath field
 });
 
 type PrescriptionFormValues = z.infer<typeof prescriptionSchema>;
@@ -84,6 +84,7 @@ export default function Patients() {
       customerId: "",
       doctorId: "",
       notes: "",
+      imagePath: "", // Initialize imagePath
     },
   });
 
@@ -149,16 +150,16 @@ export default function Patients() {
   const onSubmitCustomer = async (data: CustomerFormValues) => {
     try {
       await apiRequest("POST", "/api/customers", data);
-      
+
       toast({
         title: "Customer added",
         description: "Customer has been added successfully",
       });
-      
+
       // Refetch customers
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       refetchCustomers();
-      
+
       // Close dialog and reset form
       setIsAddCustomerDialogOpen(false);
       customerForm.reset();
@@ -174,27 +175,24 @@ export default function Patients() {
   // Add new prescription
   const onSubmitPrescription = async (data: PrescriptionFormValues) => {
     try {
-      // In a real app, we would handle file upload
-      // Here we're just sending the form data
       const payload = {
         ...data,
         customerId: parseInt(data.customerId),
         doctorId: data.doctorId ? parseInt(data.doctorId) : null,
-        prescriptionImagePath: "", // Would be set after file upload
       };
 
       await apiRequest("POST", "/api/prescriptions", payload);
-      
+
       toast({
         title: "Prescription added",
         description: "Prescription has been added successfully",
       });
-      
+
       // Refetch prescriptions
       queryClient.invalidateQueries({ 
         queryKey: ["/api/customers", parseInt(data.customerId), "prescriptions"] 
       });
-      
+
       // Close dialog and reset form
       setIsAddPrescriptionDialogOpen(false);
       prescriptionForm.reset();
@@ -278,6 +276,11 @@ export default function Patients() {
       cell: (row: any) => <div>{row.notes || "-"}</div>,
     },
     {
+      key: "imagePath", // Added imagePath column
+      header: "Image",
+      cell: (row: any) => (row.imagePath ? <img src={row.imagePath} alt="Prescription" width={100} /> : "-"),
+    },
+    {
       key: "actions",
       header: "Actions",
       cell: (row: any) => (
@@ -327,7 +330,7 @@ export default function Patients() {
   return (
     <div className="p-4 md:p-6">
       <h2 className="text-2xl font-bold mb-6">Patient & Prescription Management</h2>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Customers List */}
         <Card className="lg:col-span-2">
@@ -352,7 +355,7 @@ export default function Patients() {
                 />
               </div>
             </div>
-            
+
             <DataTable
               data={filteredCustomers}
               columns={customerColumns}
@@ -360,7 +363,7 @@ export default function Patients() {
             />
           </CardContent>
         </Card>
-        
+
         {/* Patient Details */}
         <Card>
           <CardHeader>
@@ -374,7 +377,7 @@ export default function Patients() {
                     <User className="h-10 w-10 text-primary" />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="text-center">
                     <h3 className="text-xl font-semibold">{selectedCustomer.name}</h3>
@@ -382,27 +385,27 @@ export default function Patients() {
                       <Phone className="h-3 w-3 mr-1" /> {selectedCustomer.phone}
                     </div>
                   </div>
-                  
+
                   {selectedCustomer.email && (
                     <div className="text-sm">
                       <Label className="font-medium">Email:</Label>
                       <div>{selectedCustomer.email}</div>
                     </div>
                   )}
-                  
+
                   {selectedCustomer.address && (
                     <div className="text-sm">
                       <Label className="font-medium">Address:</Label>
                       <div>{selectedCustomer.address}</div>
                     </div>
                   )}
-                  
+
                   <div className="text-sm">
                     <Label className="font-medium">Customer since:</Label>
                     <div>{format(new Date(selectedCustomer.createdAt), "dd MMMM, yyyy")}</div>
                   </div>
                 </div>
-                
+
                 <div className="pt-4">
                   <Button 
                     className="w-full" 
@@ -422,7 +425,7 @@ export default function Patients() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Patient History */}
       {selectedCustomer && (
         <div className="mt-6">
@@ -431,7 +434,7 @@ export default function Patients() {
               <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
               <TabsTrigger value="invoices">Purchase History</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="prescriptions" className="mt-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -458,7 +461,7 @@ export default function Patients() {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="invoices" className="mt-4">
               <Card>
                 <CardHeader>
@@ -482,7 +485,7 @@ export default function Patients() {
           </Tabs>
         </div>
       )}
-      
+
       {/* Add Customer Dialog */}
       <Dialog open={isAddCustomerDialogOpen} onOpenChange={setIsAddCustomerDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -504,7 +507,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={customerForm.control}
                 name="phone"
@@ -518,7 +521,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={customerForm.control}
                 name="email"
@@ -532,7 +535,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={customerForm.control}
                 name="address"
@@ -546,7 +549,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
                 <Button type="submit">Add Patient</Button>
               </DialogFooter>
@@ -554,7 +557,7 @@ export default function Patients() {
           </Form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Add Prescription Dialog */}
       <Dialog open={isAddPrescriptionDialogOpen} onOpenChange={setIsAddPrescriptionDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -590,7 +593,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={prescriptionForm.control}
                 name="doctorId"
@@ -619,7 +622,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="space-y-2">
                 <Label>Prescription Image</Label>
                 <div className="border-2 border-dashed border-border rounded-md p-6 text-center">
@@ -628,20 +631,42 @@ export default function Patients() {
                     Drag and drop or click to upload
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Supports: JPG, PNG, PDF up to 5MB
+                    Supports: JPG, PNG up to 5MB
                   </p>
                   <Input
                     type="file"
-                    className="hidden"
-                    id="prescription-upload"
-                    accept=".jpg,.jpeg,.png,.pdf"
+                    accept="image/jpeg,image/png"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        const formData = new FormData();
+                        formData.append("prescription", e.target.files[0]);
+
+                        // Upload the file
+                        fetch("/api/prescriptions/upload", {
+                          method: "POST",
+                          body: formData,
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                          prescriptionForm.setValue("imagePath", data.path);
+                          toast({
+                            title: "File uploaded",
+                            description: "Prescription image uploaded successfully",
+                          });
+                        })
+                        .catch(() => {
+                          toast({
+                            variant: "destructive",
+                            title: "Error",
+                            description: "Failed to upload prescription image",
+                          });
+                        });
+                      }
+                    }}
                   />
-                  <Button variant="outline" size="sm" className="mt-4">
-                    <Upload className="h-4 w-4 mr-2" /> Browse Files
-                  </Button>
                 </div>
               </div>
-              
+
               <FormField
                 control={prescriptionForm.control}
                 name="notes"
@@ -658,7 +683,7 @@ export default function Patients() {
                   </FormItem>
                 )}
               />
-              
+
               <DialogFooter>
                 <Button type="submit">Upload Prescription</Button>
               </DialogFooter>
