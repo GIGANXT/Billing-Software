@@ -1,7 +1,14 @@
 import { createWorker } from 'tesseract.js';
 import fs from 'fs';
 import path from 'path';
-import * as Jimp from 'jimp';
+import * as JimpModule from 'jimp';
+
+// Workaround for dynamic import
+let Jimp: any;
+(async () => {
+  // Use dynamic import to work around ES modules
+  Jimp = (await import('jimp')).default;
+})();
 
 /**
  * Processes a prescription image to improve readability
@@ -11,13 +18,13 @@ import * as Jimp from 'jimp';
  */
 export async function preprocessImage(imagePath: string): Promise<string> {
   try {
-    // Using ES module import with namespace
+    // Using CommonJS require
     const image = await Jimp.read(imagePath);
     const processedPath = imagePath.replace(/\.\w+$/, '_processed$&');
     
     // Process the image
     image
-      .grayscale() // Convert to grayscale
+      .greyscale() // Convert to grayscale
       .contrast(0.3) // Increase contrast
       .brightness(0.05) // Slightly brighten
       .quality(100) // High quality
