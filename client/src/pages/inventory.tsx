@@ -177,7 +177,13 @@ export default function Inventory() {
               <DialogHeader>
                 <DialogTitle>Add New Medicine</DialogTitle>
               </DialogHeader>
-              <AddMedicineForm  queryClient={queryClient1} onAdd={() => refetchMedicines()}/>
+              <AddMedicineForm 
+                categories={categories} 
+                onSuccess={() => {
+                  refetchMedicines();
+                  refetchCategories();
+                }}
+              />
             </DialogContent>
           </Dialog>
 
