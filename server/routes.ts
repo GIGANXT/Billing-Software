@@ -109,20 +109,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
   app.get("/api/users", isAuthenticated, async (req, res) => {
     try {
-      // In real app, ensure only admins can access this
       if (req.session.userRole !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
       
-      const users = await Promise.all(
-        (await storage.getUsers()).map(async (user) => {
-          const { password, ...userData } = user;
-          return userData;
-        })
-      );
+      const allUsers = await storage.getUsers();
+      const users = allUsers.map(user => {
+        const { password, ...userData } = user;
+        return userData;
+      });
       
       return res.status(200).json(users);
     } catch (error) {
+      console.error("Error fetching users:", error);
       return res.status(500).json({ message: "Server error" });
     }
   });
