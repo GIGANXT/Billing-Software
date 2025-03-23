@@ -54,22 +54,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { username, password } = req.body;
-      
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
-      
+
       const user = await storage.getUserByUsername(username);
-      
+
       if (!user || user.password !== password) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
-      
+
       // Store user info in session
       req.session.userId = user.id;
       req.session.userRole = user.role;
       req.session.userName = user.name;
-      
+
       // Return user data without password
       const { password: _, ...userData } = user;
       return res.status(200).json(userData);
@@ -91,14 +91,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    
+
     try {
       const user = await storage.getUser(req.session.userId);
-      
+
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       const { password, ...userData } = user;
       return res.status(200).json(userData);
     } catch (error) {
@@ -112,13 +112,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session.userRole !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
-      
+
       const allUsers = await storage.getUsers();
       const users = allUsers.map(user => {
         const { password, ...userData } = user;
         return userData;
       });
-      
+
       return res.status(200).json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -132,10 +132,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session.userRole !== "admin") {
         return res.status(403).json({ message: "Forbidden" });
       }
-      
+
       const validatedData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(validatedData);
-      
+
       const { password, ...userData } = user;
       return res.status(201).json(userData);
     } catch (error) {
@@ -215,17 +215,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { stock } = req.body;
-      
+
       if (isNaN(id) || typeof stock !== "number") {
         return res.status(400).json({ message: "Invalid input" });
       }
-      
+
       const medicine = await storage.updateMedicineStock(id, stock);
-      
+
       if (!medicine) {
         return res.status(404).json({ message: "Medicine not found" });
       }
-      
+
       return res.status(200).json(medicine);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
@@ -245,17 +245,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid customer ID" });
       }
-      
+
       const customer = await storage.getCustomer(id);
-      
+
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
-      
+
       return res.status(200).json(customer);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
@@ -266,11 +266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { phone } = req.params;
       const customer = await storage.getCustomerByPhone(phone);
-      
+
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
-      
+
       return res.status(200).json(customer);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
@@ -326,19 +326,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoices/:id", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid invoice ID" });
       }
-      
+
       const invoice = await storage.getInvoice(id);
-      
+
       if (!invoice) {
         return res.status(404).json({ message: "Invoice not found" });
       }
-      
+
       const items = await storage.getInvoiceItems(id);
-      
+
       return res.status(200).json({ invoice, items });
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
@@ -348,11 +348,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:id/invoices", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid customer ID" });
       }
-      
+
       const invoices = await storage.getCustomerInvoices(id);
       return res.status(200).json(invoices);
     } catch (error) {
@@ -363,29 +363,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/invoices", isAuthenticated, async (req, res) => {
     try {
       const { invoice, items } = req.body;
-      
+
       if (!invoice || !items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Invalid invoice data" });
       }
-      
+
       // Generate a unique invoice number
       const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
       const randomStr = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
       invoice.invoiceNumber = `INV-${dateStr}-${randomStr}`;
-      
+
       // Set the user ID from the session
       invoice.userId = req.session.userId;
-      
+
       const validatedInvoice = insertInvoiceSchema.parse(invoice);
       const createdInvoice = await storage.createInvoice(validatedInvoice);
-      
+
       // Create invoice items
       const createdItems = [];
       for (const item of items) {
         item.invoiceId = createdInvoice.id;
         const validatedItem = insertInvoiceItemSchema.parse(item);
         createdItems.push(await storage.createInvoiceItem(validatedItem));
-        
+
         // Update medicine stock
         const medicine = await storage.getMedicine(item.medicineId);
         if (medicine) {
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateMedicineStock(medicine.id, newStock);
         }
       }
-      
+
       return res.status(201).json({ invoice: createdInvoice, items: createdItems });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -407,11 +407,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customers/:id/prescriptions", isAuthenticated, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid customer ID" });
       }
-      
+
       const prescriptions = await storage.getPrescriptions(id);
       return res.status(200).json(prescriptions);
     } catch (error) {
@@ -431,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Server error" });
     }
   });
-  
+
   // Prescription image upload and processing route
   app.post(
     "/api/prescriptions/upload",
@@ -442,12 +442,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (!req.file) {
           return res.status(400).json({ message: "No file uploaded" });
         }
-        
+
         const imagePath = getAbsoluteFilePath(req.file.filename, "prescription");
-        
+
         // Process the uploaded prescription image
         const extractionResult = await processPrescriptionImage(imagePath);
-        
+
         return res.status(200).json({
           filename: req.file.filename,
           originalName: req.file.originalname,
@@ -460,7 +460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
   );
-  
+
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
@@ -482,6 +482,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(200).json(dailySales);
     } catch (error) {
       return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  // Reports routes
+  app.get("/api/reports/stock-adjustment", isAuthenticated, async (req, res) => {
+    try {
+      const stockAdjustments = await storage.getStockAdjustments();
+      const report = stockAdjustments.map(adj => ({
+        medicine: adj.medicine_name,
+        oldStock: adj.old_stock,
+        newStock: adj.new_stock,
+        reason: adj.reason,
+        date: adj.created_at
+      }));
+      res.status(200).json(report);
+    } catch (error) {
+      res.status(500).json({ message: "Error generating report" });
+    }
+  });
+
+  app.get("/api/reports/expiry", isAuthenticated, async (req, res) => {
+    try {
+      const medicines = await storage.getMedicines();
+      const expiringMeds = medicines
+        .filter(med => {
+          const expiryDate = new Date(med.expiry_date);
+          const today = new Date();
+          const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return daysUntilExpiry <= 90; // Show medicines expiring within 90 days
+        })
+        .map(med => ({
+          name: med.name,
+          batch: med.batch_number,
+          expiryDate: med.expiry_date,
+          stock: med.stock,
+          daysLeft: Math.ceil((new Date(med.expiry_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        }));
+      res.status(200).json(expiringMeds);
+    } catch (error) {
+      res.status(500).json({ message: "Error generating report" });
+    }
+  });
+
+  app.get("/api/reports/gstr1", isAuthenticated, async (req, res) => {
+    try {
+      // TODO: Implement GSTR-1 report generation
+      res.status(200).json({ message: "GSTR-1 report generated" });
+    } catch (error) {
+      res.status(500).json({ message: "Error generating report" });
     }
   });
 

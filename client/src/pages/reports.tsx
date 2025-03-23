@@ -693,12 +693,75 @@ export default function Reports() {
           </div>
 
           <div className="mt-6 flex gap-4 flex-wrap">
-            <Button className="flex items-center">
+            <Button 
+              className="flex items-center" 
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/reports/stock-adjustment');
+                  const data = await response.json();
+                  const csv = [
+                    ['Medicine', 'Old Stock', 'New Stock', 'Reason', 'Date'].join(','),
+                    ...data.map((row: any) => [
+                      row.medicine,
+                      row.oldStock,
+                      row.newStock,
+                      row.reason,
+                      new Date(row.date).toLocaleDateString()
+                    ].join(','))
+                  ].join('\n');
+                  
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `stock-adjustment-report-${new Date().toISOString().split('T')[0]}.csv`;
+                  a.click();
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to generate report",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
               <BarChart2 className="h-4 w-4 mr-2" /> Stock Adjustment Report
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
 
-            <Button variant="outline" className="flex items-center">
+            <Button 
+              variant="outline" 
+              className="flex items-center"
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/reports/expiry');
+                  const data = await response.json();
+                  const csv = [
+                    ['Medicine', 'Batch', 'Expiry Date', 'Current Stock', 'Days Until Expiry'].join(','),
+                    ...data.map((row: any) => [
+                      row.name,
+                      row.batch,
+                      new Date(row.expiryDate).toLocaleDateString(),
+                      row.stock,
+                      row.daysLeft
+                    ].join(','))
+                  ].join('\n');
+                  
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `expiry-report-${new Date().toISOString().split('T')[0]}.csv`;
+                  a.click();
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to generate report",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
               <BarChart2 className="h-4 w-4 mr-2" /> Expiry Report
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
