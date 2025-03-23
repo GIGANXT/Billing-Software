@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ZodError } from "zod";
@@ -16,6 +16,9 @@ import {
 import express from "express";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import { prescriptionUpload, getAbsoluteFilePath } from "./services/upload";
+import { processPrescriptionImage } from "./services/prescription";
+import path from "path";
 
 const SessionStore = MemoryStore(session);
 
