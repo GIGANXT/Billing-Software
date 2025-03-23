@@ -37,7 +37,7 @@ export default function Reports() {
   // Get date range based on selection
   const getDateRange = () => {
     const today = new Date();
-    
+
     switch (dateRange) {
       case "week":
         return { start: subDays(today, 7), end: today };
@@ -94,9 +94,9 @@ export default function Reports() {
         date: format(new Date(item.date), "dd MMM"),
         sales: item.sales,
       })).reverse();
-      
+
       setSalesChartData(formattedSalesData);
-      
+
       // Mock category distribution data
       // In a real app, this would come from an API
       const categories = [
@@ -106,78 +106,33 @@ export default function Reports() {
         { name: "Cold & Cough", value: 10 },
         { name: "Antiallergic", value: 10 },
       ];
-      
+
       setCategoryChartData(categories);
     }
   }, [dailySales, dateRange]);
 
   // Download reports in CSV format
-  const downloadReport = (reportType: string) => {
-    let csvContent = "";
-    let filename = "";
-    
-    switch (reportType) {
-      case "sales":
-        // Create sales report CSV
-        csvContent = [
-          "Date,Sales,Transactions",
-          ...dailySales.map((day: any) => 
-            `${day.date},${day.sales},${day.transactions}`
-          )
-        ].join("\n");
-        
-        filename = `sales-report-${format(new Date(), "yyyy-MM-dd")}.csv`;
-        break;
-      
-      case "gst":
-        // Create GST report CSV
-        // In a real app, this would contain actual GST data
-        csvContent = [
-          "Invoice Number,Date,Taxable Amount,CGST,SGST,Total Tax,Total Amount",
-          "INV-20230501-0001,2023-05-01,1000.00,90.00,90.00,180.00,1180.00",
-          "INV-20230502-0002,2023-05-02,2500.00,225.00,225.00,450.00,2950.00",
-          "INV-20230503-0003,2023-05-03,750.00,67.50,67.50,135.00,885.00"
-        ].join("\n");
-        
-        filename = `gst-report-${format(new Date(), "yyyy-MM-dd")}.csv`;
-        break;
-      
-      case "inventory":
-        // Create inventory report CSV
-        // In a real app, this would contain actual inventory data
-        csvContent = [
-          "Medicine,Category,Opening Stock,Purchases,Sales,Closing Stock",
-          "Paracetamol 500mg,Pain Relief,200,100,65,235",
-          "Azithromycin 500mg,Antibiotics,150,100,64,186",
-          "Cetirizine 10mg,Antiallergic,50,0,47,3"
-        ].join("\n");
-        
-        filename = `inventory-report-${format(new Date(), "yyyy-MM-dd")}.csv`;
-        break;
-      
-      default:
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Invalid report type selected.",
-        });
-        return;
-    }
-    
-    // Create download link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+  const downloadReport = (type: string) => {
+    const data = type === "gstr1" ? gstReportData : type === "gstr3b" ? gstReportData : [];
+    const filename = `${type}-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Month,Taxable Amount,CGST,SGST,Total Tax,Total Amount\n" +
+      data.map(row => 
+        `${row.month},${row.taxableAmount},${row.cgst},${row.sgst},${row.totalTax},${row.totalAmount}`
+      ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
+    link.setAttribute("href", encodedUri);
     link.setAttribute("download", filename);
-    link.style.display = "none";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     toast({
-      title: "Report downloaded",
-      description: `${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report has been downloaded.`,
+      title: "Report Downloaded",
+      description: `The ${type} report has been downloaded as ${filename}`,
     });
   };
 
@@ -276,14 +231,14 @@ export default function Reports() {
   return (
     <div className="p-4 md:p-6">
       <h2 className="text-2xl font-bold mb-6">Reports & Analytics</h2>
-      
+
       <Tabs defaultValue="sales">
         <TabsList className="mb-4">
           <TabsTrigger value="sales">Sales Reports</TabsTrigger>
           <TabsTrigger value="gst">GST Reports</TabsTrigger>
           <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
         </TabsList>
-        
+
         {/* Sales Reports */}
         <TabsContent value="sales">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
@@ -306,13 +261,13 @@ export default function Reports() {
                   <SelectItem value="year">This year</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Button variant="outline" onClick={() => downloadReport("sales")}>
                 <Download className="h-4 w-4 mr-2" /> Export
               </Button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
               <CardHeader className="pb-2">
@@ -328,7 +283,7 @@ export default function Reports() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -343,7 +298,7 @@ export default function Reports() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -359,7 +314,7 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -400,7 +355,7 @@ export default function Reports() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Sales by Category</CardTitle>
@@ -434,7 +389,7 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-          
+
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Top Selling Products</CardTitle>
@@ -448,7 +403,7 @@ export default function Reports() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* GST Reports */}
         <TabsContent value="gst">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
@@ -469,13 +424,13 @@ export default function Reports() {
                   <SelectItem value="quarter">Quarterly</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Button variant="outline" onClick={() => downloadReport("gst")}>
                 <Download className="h-4 w-4 mr-2" /> Export
               </Button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardHeader className="pb-2">
@@ -487,7 +442,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold">₹24,500.00</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -498,7 +453,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold">₹2,205.00</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -509,7 +464,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold">₹2,205.00</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -521,7 +476,7 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Monthly GST Summary</CardTitle>
@@ -554,27 +509,27 @@ export default function Reports() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              
+
               <DataTable
                 data={gstReportData}
                 columns={gstReportColumns}
               />
             </CardContent>
           </Card>
-          
+
           <div className="mt-6 flex gap-4 flex-wrap">
-            <Button className="flex items-center">
+            <Button className="flex items-center" onClick={() => downloadReport("gstr1")}>
               <FileText className="h-4 w-4 mr-2" /> Generate GSTR-1 Report
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
-            
-            <Button variant="outline" className="flex items-center">
+
+            <Button variant="outline" className="flex items-center" onClick={() => downloadReport("gstr3b")}>
               <FileText className="h-4 w-4 mr-2" /> Generate GSTR-3B Report
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </TabsContent>
-        
+
         {/* Inventory Reports */}
         <TabsContent value="inventory">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
@@ -588,7 +543,7 @@ export default function Reports() {
               </Button>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <Card>
               <CardHeader className="pb-2">
@@ -600,7 +555,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold">182</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -611,7 +566,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold text-amber-500">8</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -622,7 +577,7 @@ export default function Reports() {
                 <div className="text-2xl font-bold text-red-500">3</div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -634,7 +589,7 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -679,7 +634,7 @@ export default function Reports() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Stock Movement</CardTitle>
@@ -736,13 +691,13 @@ export default function Reports() {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="mt-6 flex gap-4 flex-wrap">
             <Button className="flex items-center">
               <BarChart2 className="h-4 w-4 mr-2" /> Stock Adjustment Report
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
-            
+
             <Button variant="outline" className="flex items-center">
               <BarChart2 className="h-4 w-4 mr-2" /> Expiry Report
               <ArrowRight className="h-4 w-4 ml-2" />
